@@ -38,34 +38,32 @@ export default function ScenarioPlayer({ participant }: { participant: string })
 
   return (
     <div className="space-y-6">
-      {/* Scenario text panel */}
-      <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-100 relative min-h-[160px]">
+      {/* Scenario text and options */}
+      <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-100 shadow-sm">
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
           </div>
         ) : (
           <>
-            <h3 className="text-lg font-medium text-indigo-900 mb-4">{node.text}</h3>
+            <p className="text-gray-800 text-lg mb-5 leading-relaxed">{node.text}</p>
             {node.options.length > 0 ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 {node.options.map((o) => (
                   <button
                     key={o.label}
-                    className="rounded-md bg-indigo-600 px-4 py-2.5 text-white text-sm font-medium
-                      hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
-                      transition-colors duration-200 shadow-sm"
                     onClick={() => choose(o)}
+                    className="w-full text-left bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-3 transition-colors shadow-sm font-medium"
                   >
                     {o.label}
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-4">
+              <div className="text-center py-6">
                 <p className="text-indigo-800 font-medium">Scenario complete!</p>
                 <button 
-                  className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm"
+                  className="mt-4 px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
                   onClick={() => {
                     setNode(scenario.start);
                     setScore(0);
@@ -79,23 +77,24 @@ export default function ScenarioPlayer({ participant }: { participant: string })
           </>
         )}
       </div>
-      
+
       {/* Integrity gauge */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+        <h3 className="text-sm font-medium text-gray-700 mb-2">Integrity Score</h3>
         <IntegrityGauge score={score} />
       </div>
       
       {/* History of choices */}
       {history.length > 0 && (
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Your path so far:</h4>
-          <ul className="space-y-1 text-xs text-gray-600">
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Your path so far:</h3>
+          <ul className="space-y-2">
             {history.map((step, i) => (
-              <li key={i} className="flex items-start">
-                <span className="inline-block w-5 h-5 bg-indigo-100 text-indigo-800 rounded-full text-xs flex items-center justify-center mr-2 flex-shrink-0 mt-0.5">
+              <li key={i} className="flex items-start text-sm text-gray-600">
+                <span className="inline-flex items-center justify-center w-5 h-5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium mr-2 flex-shrink-0">
                   {i+1}
                 </span>
-                <span>{step}</span>
+                <span className="leading-tight">{step}</span>
               </li>
             ))}
           </ul>
