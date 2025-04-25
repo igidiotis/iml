@@ -4,7 +4,17 @@ import { supabase } from "../../../lib/supabaseClient";
 export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  await supabase.from("session_events").insert(body);
-  return NextResponse.json({ ok: true });
+  try {
+    const body = await req.json();
+    // Only attempt to use Supabase if in production with proper credentials
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      await supabase.from("session_events").insert(body);
+    } else {
+      console.log("Skipping Supabase log in development/build:", body);
+    }
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Error in log API:", error);
+    return NextResponse.json({ ok: false, error: "Logging failed" }, { status: 500 });
+  }
 } 
