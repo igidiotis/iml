@@ -79,6 +79,19 @@ function getRandomResponse(responses: string[]): string {
   return responses[Math.floor(Math.random() * responses.length)];
 }
 
+// Helper function to ensure responses are conversational and under 100 words
+function truncateToConversationalLength(text: string): string {
+  // Count words
+  const words = text.split(/\s+/);
+  if (words.length <= 100) return text;
+  
+  // Truncate to 95 words to leave room for conclusion
+  const truncated = words.slice(0, 95).join(' ');
+  
+  // Add a natural conclusion
+  return truncated + '... That covers the main points!';
+}
+
 /**
  * Function to interact with Gemini model API or provide sensible mock responses
  */
@@ -103,51 +116,56 @@ export async function askGemini(prompt: string): Promise<string> {
     const isFuture = prompt.toLowerCase().includes("2045") || prompt.toLowerCase().includes("looking back");
     const responseSet: ResponseSet = isFuture ? MOCK_RESPONSES.future : MOCK_RESPONSES.now;
     
-    // Try to match the prompt with relevant mock responses
+    // Return a mock response from the selected category, but ensure it's conversational and concise
+    let response: string;
+    
     if (userQuestion.toLowerCase().includes("policy") || 
         userQuestion.toLowerCase().includes("integrity") || 
         userQuestion.toLowerCase().includes("cheating") ||
         userQuestion.toLowerCase().includes("plagiarism")) {
-      return getRandomResponse(responseSet.policies);
+      response = getRandomResponse(responseSet.policies);
     } else if (userQuestion.toLowerCase().includes("detect") || 
                userQuestion.toLowerCase().includes("identify") ||
                userQuestion.toLowerCase().includes("catch")) {
-      return getRandomResponse(responseSet.detection);
+      response = getRandomResponse(responseSet.detection);
     } else if (isFuture && responseSet.evolution && 
               (userQuestion.toLowerCase().includes("evolve") || 
                userQuestion.toLowerCase().includes("change") || 
                userQuestion.toLowerCase().includes("transform") ||
                userQuestion.toLowerCase().includes("history"))) {
-      return getRandomResponse(responseSet.evolution);
+      response = getRandomResponse(responseSet.evolution);
     } else if (isFuture && responseSet.skills && 
               (userQuestion.toLowerCase().includes("skill") || 
                userQuestion.toLowerCase().includes("learn") ||
                userQuestion.toLowerCase().includes("ability") ||
                userQuestion.toLowerCase().includes("competency"))) {
-      return getRandomResponse(responseSet.skills);
+      response = getRandomResponse(responseSet.skills);
     } else if (userQuestion.toLowerCase().includes("teach") || 
                userQuestion.toLowerCase().includes("educator") ||
                userQuestion.toLowerCase().includes("class") || 
                userQuestion.toLowerCase().includes("course")) {
-      return responseSet.teaching ? getRandomResponse(responseSet.teaching) : getRandomResponse(responseSet.fallback);
+      response = responseSet.teaching ? getRandomResponse(responseSet.teaching) : getRandomResponse(responseSet.fallback);
     } else if (!isFuture && responseSet.assessment &&
               (userQuestion.toLowerCase().includes("assess") || 
                userQuestion.toLowerCase().includes("grade") ||
                userQuestion.toLowerCase().includes("evaluate"))) {
-      return getRandomResponse(responseSet.assessment);
+      response = getRandomResponse(responseSet.assessment);
     } else {
       // Pick a more contextual fallback based on keywords
       if (userQuestion.toLowerCase().includes("hello") || 
           userQuestion.toLowerCase().includes("hi") ||
           userQuestion.toLowerCase().includes("introduction")) {
-        return isFuture 
+        response = isFuture 
           ? "Hello! I'm a university educator from the year 2045, looking back at how education and academic integrity have evolved with AI over the past 20 years. How can I help you understand this perspective?"
           : "Hello! I'm a university educator in 2025, navigating the integration of AI tools in education while maintaining academic integrity. What would you like to know about our current approaches?";
+      } else {
+        // General fallback
+        response = getRandomResponse(responseSet.fallback);
       }
-      
-      // General fallback
-      return getRandomResponse(responseSet.fallback);
     }
+    
+    // Ensure the response is concise and conversational
+    return truncateToConversationalLength(response);
   }
   
   try {
@@ -185,7 +203,7 @@ export async function askGemini(prompt: string): Promise<string> {
         temperature: 0.7,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 1024,
+        maxOutputTokens: 250, // Reduced for shorter responses
       },
     });
     
@@ -193,7 +211,7 @@ export async function askGemini(prompt: string): Promise<string> {
     const chat = model.startChat({
       history: [],
       generationConfig: {
-        maxOutputTokens: 1024,
+        maxOutputTokens: 250, // Reduced for shorter responses
       },
     });
     
@@ -204,7 +222,8 @@ export async function askGemini(prompt: string): Promise<string> {
     console.log("Gemini API response received successfully");
     
     const response = result.response.text();
-    return response;
+    // Ensure the response is concise and conversational even when coming from the API
+    return truncateToConversationalLength(response);
   } catch (error) {
     // Enhanced error logging
     console.error("Error calling Gemini API:", JSON.stringify(error, null, 2));

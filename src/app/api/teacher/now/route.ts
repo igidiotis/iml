@@ -6,7 +6,11 @@ export const runtime = "edge";
 export async function POST(req: NextRequest) {
   const { question } = await req.json();
   const answer = await askGemini(
-    `You are a 2025 university teacher. Answer with current academic integrity policy in mind:\n${question}`
+    `You are a 2025 university teacher. Answer with current academic integrity policy in mind.
+    
+Keep your response concise (maximum 100 words), friendly, and conversational as if talking to a student.
+
+Question: ${question}`
   );
   return NextResponse.json({ answer });
 } 
