@@ -83,9 +83,18 @@ function getRandomResponse(responses: string[]): string {
  * Function to interact with Gemini model API or provide sensible mock responses
  */
 export async function askGemini(prompt: string): Promise<string> {
+  // Debug API key presence (masked for security)
+  if (process.env.GEMINI_API_KEY) {
+    const maskedKey = process.env.GEMINI_API_KEY.slice(0, 4) + "..." + 
+                     process.env.GEMINI_API_KEY.slice(-4);
+    console.log(`Found API key starting with ${maskedKey.slice(0, 4)} and ending with ${maskedKey.slice(-4)}`);
+  } else {
+    console.log("No GEMINI_API_KEY found in environment variables");
+  }
+  
   // During build or without API key, return a relevant mock response
   if (!process.env.GEMINI_API_KEY) {
-    console.log("No GEMINI_API_KEY found, using mock response");
+    console.log("Using mock response system");
     
     // Extract just the user's question from the prompt (remove the persona prefix)
     const userQuestion = prompt.includes("\n") ? prompt.split("\n")[1] : prompt;
@@ -142,16 +151,54 @@ export async function askGemini(prompt: string): Promise<string> {
   }
   
   try {
+    console.log("Attempting to call Gemini API with prompt:", prompt.substring(0, 50) + "...");
+    
     // Initialize the Generative AI API with the API key
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    
+    // Use the gemini-1.5-pro model if available, fallback to gemini-pro
+    // This is the current recommended model as of mid-2023
+    const modelName = "gemini-pro";
+    console.log(`Using Gemini model: ${modelName}`);
+    
+    const model = genAI.getGenerativeModel({ model: modelName });
+    
+    // Generate a response with safety settings appropriate for educational content
+    const generationConfig = {
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 1024,
+    };
     
     // Generate a response
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig,
+    });
+    
+    // Log successful API call
+    console.log("Gemini API response received successfully");
+    
     const response = result.response.text();
     return response;
   } catch (error) {
+    // Enhanced error logging
     console.error("Error calling Gemini API:", error);
+    
+    if (error instanceof Error) {
+      console.error(`Error name: ${error.name}, Message: ${error.message}`);
+      
+      // Check for common API errors
+      if (error.message.includes("API key")) {
+        console.error("API key error - please check your API key format and validity");
+      } else if (error.message.includes("quota")) {
+        console.error("Quota exceeded - you may have reached your API usage limit");
+      } else if (error.message.includes("permission")) {
+        console.error("Permission error - your API key may not have access to this model");
+      }
+    }
+    
     return "Sorry, I couldn't process that request. Please try again later.";
   }
 } 
