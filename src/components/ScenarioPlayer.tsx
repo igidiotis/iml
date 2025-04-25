@@ -4,7 +4,7 @@ import { useState } from "react";
 import { scenario, DecisionNode } from "../data/scenario";
 import { IntegrityGauge } from "./IntegrityGauge";
 
-export default function ScenarioPlayer({ participant }: { participant: string }) {
+export default function ScenarioPlayer({ participant, persona }: { participant: string; persona: string }) {
   const [node, setNode] = useState<DecisionNode>(scenario.start);
   const [score, setScore] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -18,6 +18,7 @@ export default function ScenarioPlayer({ participant }: { participant: string })
         method: "POST",
         body: JSON.stringify({
           participant,
+          persona,
           event_type: "decision",
           payload: { node: node.id, choice: opt.label, score: opt.score },
         }),
