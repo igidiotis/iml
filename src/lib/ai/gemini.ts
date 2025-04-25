@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 // Mock responses for development/testing with variations
 const MOCK_RESPONSES = {
@@ -156,26 +156,49 @@ export async function askGemini(prompt: string): Promise<string> {
     // Initialize the Generative AI API with the API key
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
     
-    // Use the gemini-1.5-pro model if available, fallback to gemini-pro
-    // This is the current recommended model as of mid-2023
-    const modelName = "gemini-pro";
+    // Use the latest Gemini 2.0 Flash model
+    const modelName = "gemini-2.0-flash";
     console.log(`Using Gemini model: ${modelName}`);
     
-    const model = genAI.getGenerativeModel({ model: modelName });
-    
-    // Generate a response with safety settings appropriate for educational content
-    const generationConfig = {
-      temperature: 0.7,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 1024,
-    };
-    
-    // Generate a response
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig,
+    // Set up the model with safety settings appropriate for educational content
+    const model = genAI.getGenerativeModel({
+      model: modelName,
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+      },
     });
+    
+    // Prepare the chat history format
+    const chat = model.startChat({
+      history: [],
+      generationConfig: {
+        maxOutputTokens: 1024,
+      },
+    });
+    
+    // Send the message and get response
+    const result = await chat.sendMessage(prompt);
     
     // Log successful API call
     console.log("Gemini API response received successfully");
@@ -184,10 +207,11 @@ export async function askGemini(prompt: string): Promise<string> {
     return response;
   } catch (error) {
     // Enhanced error logging
-    console.error("Error calling Gemini API:", error);
+    console.error("Error calling Gemini API:", JSON.stringify(error, null, 2));
     
     if (error instanceof Error) {
       console.error(`Error name: ${error.name}, Message: ${error.message}`);
+      console.error(`Stack trace: ${error.stack}`);
       
       // Check for common API errors
       if (error.message.includes("API key")) {
@@ -196,9 +220,14 @@ export async function askGemini(prompt: string): Promise<string> {
         console.error("Quota exceeded - you may have reached your API usage limit");
       } else if (error.message.includes("permission")) {
         console.error("Permission error - your API key may not have access to this model");
+      } else if (error.message.includes("model")) {
+        console.error("Model error - the specified model may not be available for your API key");
+      } else if (error.message.includes("network")) {
+        console.error("Network error - there might be connectivity issues");
       }
     }
     
+    // Add fallback for API errors
     return "Sorry, I couldn't process that request. Please try again later.";
   }
 } 
