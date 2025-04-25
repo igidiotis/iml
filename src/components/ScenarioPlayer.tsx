@@ -1,6 +1,7 @@
 "use client";
+import * as React from "react";
 import { useState } from "react";
-import { scenario, DecisionNode } from "@/data/scenario";
+import { scenario, DecisionNode } from "../data/scenario";
 import { IntegrityGauge } from "./IntegrityGauge";
 
 export default function ScenarioPlayer({ participant }: { participant: string }) {
