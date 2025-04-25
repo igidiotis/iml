@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import * as React from "react";
 import ScenarioPlayer from "../components/ScenarioPlayer";
 import { TeacherChat } from "../components/TeacherChat";
 
