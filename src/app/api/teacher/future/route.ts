@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { askGemini } from "@/lib/ai/gemini";
+import { askGemini } from "../../../../lib/ai/gemini";
 
 export const runtime = "edge";
 
