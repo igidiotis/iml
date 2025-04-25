@@ -1,38 +1,39 @@
 "use client";
 
 import * as React from "react";
+import { useEffect } from "react";
 import ScenarioPlayer from "../components/ScenarioPlayer";
 import { TeacherChat } from "../components/TeacherChat";
 
-// Media query styles for responsive layout
-React.useEffect(() => {
-  const mediaQuery = window.matchMedia('(min-width: 768px)');
-  
-  function updateStyles() {
-    const gridElement = document.getElementById('main-grid');
-    if (gridElement) {
-      if (mediaQuery.matches) {
-        // Desktop view - 3 column grid with scenario taking 2 columns
-        gridElement.style.gridTemplateColumns = '2fr 1fr';
-      } else {
-        // Mobile view - stacked layout
-        gridElement.style.gridTemplateColumns = '1fr';
-      }
-    }
-  }
-  
-  // Set initial styles
-  updateStyles();
-  
-  // Add listener for viewport changes
-  mediaQuery.addEventListener('change', updateStyles);
-  
-  // Cleanup
-  return () => mediaQuery.removeEventListener('change', updateStyles);
-}, []);
-
 export default function Home() {
   const participant = "anon-" + Math.random().toString(36).slice(2, 8);
+  
+  // Media query for responsive layout
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    
+    function updateStyles() {
+      const gridElement = document.getElementById('main-grid');
+      if (gridElement) {
+        if (mediaQuery.matches) {
+          // Desktop view - 2 column grid
+          gridElement.style.gridTemplateColumns = '2fr 1fr';
+        } else {
+          // Mobile view - stacked layout
+          gridElement.style.gridTemplateColumns = '1fr';
+        }
+      }
+    }
+    
+    // Set initial styles
+    updateStyles();
+    
+    // Add listener for viewport changes
+    mediaQuery.addEventListener('change', updateStyles);
+    
+    // Cleanup
+    return () => mediaQuery.removeEventListener('change', updateStyles);
+  }, []);
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">
@@ -49,7 +50,7 @@ export default function Home() {
         </section>
 
         {/* Chat cards */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section id="main-grid" className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white shadow-lg rounded-xl p-6">
             <h2 className="text-xl font-semibold mb-2">Teacher-Bot 2025</h2>
             <TeacherChat endpoint="now" />
